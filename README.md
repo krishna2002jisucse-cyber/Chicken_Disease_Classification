@@ -1,158 +1,299 @@
-# Chicken-Disease-Classification--Project
+# 🐔 Chicken Disease Classification Using Deep Learning
 
+> **VGG16-based Transfer Learning** with Grad-CAM Explainability, DVC MLOps Pipeline, and Flask Deployment  
+> *M.Tech AIML — Symbiosis Institute of Technology, Pune | 2025–26*
 
-## Workflows
+---
 
-1. Update config.yaml
-2. Update secrets.yaml [Optional]
-3. Update params.yaml
-4. Update the entity
-5. Update the configuration manager in src config
-6. Update the components
-7. Update the pipeline 
-8. Update the main.py
-9. Update the dvc.yaml
+## 📌 About the Project
 
+This project automatically detects **Coccidiosis** (a common chicken disease) from fecal images using deep learning. A farmer simply uploads a photo of chicken feces and the system instantly predicts whether the chicken is **Diseased (Coccidiosis)** or **Healthy**.
 
-# How to run?
-### STEPS:
+**Key Results:**
+- ✅ Validation Accuracy: **88.79%**
+- ✅ Validation Loss: **0.2918**
+- ✅ AUC Score: **0.935**
 
-Clone the repository
+---
+
+## 🏗️ Project Architecture
+
+```
+Fecal Image Input
+       ↓
+Data Preprocessing & Augmentation
+       ↓
+VGG16 Model (Transfer Learning from ImageNet)
+       ↓
+Prediction → Coccidiosis or Healthy
+       ↓
+Grad-CAM Heatmap (Explainability)
+       ↓
+Flask Web App (API Endpoints)
+```
+
+---
+
+## 📁 Project Structure
+
+```
+Chicken_Disease_Classification/
+│
+├── config/
+│   └── config.yaml              # paths and source URL
+│
+├── src/cnnClassifier/
+│   ├── components/
+│   │   ├── data_ingestion.py
+│   │   ├── prepare_base_model.py
+│   │   ├── training.py
+│   │   └── evaluation.py
+│   ├── pipeline/
+│   │   ├── stage_01_data_ingestion.py
+│   │   ├── stage_02_prepare_base_model.py
+│   │   ├── stage_03_training.py
+│   │   ├── stage_04_evaluation.py
+│   │   └── predict.py
+│   └── utils/
+│       ├── common.py
+│       └── gradcam.py           # Grad-CAM heatmap generation
+│
+├── templates/
+│   └── index.html               # web UI
+│
+├── artifacts/                   # auto-generated (model, data, results)
+├── app.py                       # Flask web application
+├── main.py                      # run full pipeline
+├── params.yaml                  # model hyperparameters
+├── dvc.yaml                     # DVC pipeline definition
+├── requirements.txt
+└── scores.json                  # evaluation results
+```
+
+---
+
+## ⚙️ Hyperparameters
+
+| Parameter | Value |
+|-----------|-------|
+| Image Size | 224 × 224 × 3 |
+| Batch Size | 16 |
+| Epochs | 1 (increase for better results) |
+| Optimizer | Adam |
+| Loss | Categorical Cross-Entropy |
+| Weights | ImageNet (frozen) |
+| Classes | 2 (Coccidiosis, Healthy) |
+| Augmentation | Yes (rotation, flip, zoom, shear) |
+
+---
+
+## 🚀 How to Run This Project
+
+### Step 1 — Clone the Repository
 
 ```bash
-https://github.com/entbappy/Chicken-Disease-Classification--Project
+git clone https://github.com/krishna2002jisucse-cyber/Chicken_Disease_Classification.git
+cd Chicken_Disease_Classification
 ```
-### STEP 01- Create a conda environment after opening the repository
+
+### Step 2 — Create a Virtual Environment
 
 ```bash
-conda create -n cnncls python=3.8 -y
+# Using conda
+conda create -n chicken python=3.10 -y
+conda activate chicken
+
+# OR using venv
+python -m venv venv
+source venv/bin/activate        # Mac/Linux
+venv\Scripts\activate           # Windows
 ```
 
-```bash
-conda activate cnncls
-```
+### Step 3 — Install Dependencies
 
-
-### STEP 02- install the requirements
 ```bash
 pip install -r requirements.txt
 ```
 
+### Step 4 — Run the Full DVC Pipeline
 
 ```bash
-# Finally run the following command
+# Run all 4 stages automatically
+python main.py
+```
+
+This will:
+1. **Download** the dataset from GitHub
+2. **Prepare** the VGG16 base model
+3. **Train** the model with augmentation
+4. **Evaluate** and save results to `scores.json`
+
+### Step 5 — Start the Flask Web App
+
+```bash
 python app.py
 ```
 
-Now,
-```bash
-open up you local host and port
+Then open your browser and go to: **http://localhost:8080**
+
+---
+
+## 🔗 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web interface — upload image from browser |
+| `/predict` | POST | Send image → get prediction (JSON) |
+| `/train` | GET/POST | Trigger full pipeline retraining |
+| `/metrics` | GET | Get evaluation metrics as JSON |
+| `/evaluation_images/<filename>` | GET | View evaluation charts |
+
+### Example — Using /predict
+
+```python
+import requests, base64
+
+with open("fecal_image.jpg", "rb") as f:
+    image_data = base64.b64encode(f.read()).decode("utf-8")
+
+response = requests.post("http://localhost:8080/predict",
+                         json={"image": image_data})
+print(response.json())
+# Output: {"image": "Coccidiosis"} or {"image": "Healthy"}
 ```
 
+---
 
-### DVC cmd
+## 📊 DVC Pipeline
 
-1. dvc init
-2. dvc repro
-3. dvc dag
+This project uses **DVC (Data Version Control)** for a fully reproducible ML pipeline.
 
+```bash
+# Run the pipeline
+dvc repro
 
+# Visualize the pipeline DAG
+dvc dag
 
-# AWS-CICD-Deployment-with-Github-Actions
+# Check parameter changes
+dvc params diff
+```
 
-## 1. Login to AWS console.
+**4 Pipeline Stages:**
 
-## 2. Create IAM user for deployment
+| Stage | Script | Output |
+|-------|--------|--------|
+| 01 — Data Ingestion | `stage_01_data_ingestion.py` | `artifacts/data_ingestion/` |
+| 02 — Base Model Prep | `stage_02_prepare_base_model.py` | `base_model_updated.h5` |
+| 03 — Training | `stage_03_training.py` | `artifacts/training/model.h5` |
+| 04 — Evaluation | `stage_04_evaluation.py` | `scores.json` |
 
-	#with specific access
+---
 
-	1. EC2 access : It is virtual machine
+## 🔍 Grad-CAM Explainability
 
-	2. ECR: Elastic Container registry to save your docker image in aws
+The project includes **Grad-CAM** (Gradient-weighted Class Activation Mapping) which visually explains *why* the model made a prediction by highlighting the important regions in the fecal image.
 
+- 🔴 **Red regions** = areas that caused the Coccidiosis prediction
+- 🔵 **Blue regions** = less important areas
 
-	#Description: About the deployment
+Generated via `src/cnnClassifier/utils/gradcam.py`
 
-	1. Build docker image of the source code
+---
 
-	2. Push your docker image to ECR
+## 🛠️ Tech Stack
 
-	3. Launch Your EC2 
+| Tool | Purpose |
+|------|---------|
+| Python 3.10 | Core language |
+| TensorFlow / Keras | Deep learning framework |
+| VGG16 | Pre-trained CNN model |
+| DVC | ML pipeline & experiment tracking |
+| Flask | Web application & REST API |
+| OpenCV | Grad-CAM heatmap generation |
+| Matplotlib / Seaborn | Evaluation visualization |
 
-	4. Pull Your image from ECR in EC2
+---
 
-	5. Lauch your docker image in EC2
+## 📋 Requirements
 
-	#Policy:
+```
+tensorflow
+flask
+flask-cors
+dvc
+numpy
+pandas
+matplotlib
+seaborn
+scipy
+python-box==6.0.2
+pyYAML
+tqdm
+ensure==1.0.2
+joblib
+```
 
-	1. AmazonEC2ContainerRegistryFullAccess
+Install all with:
+```bash
+pip install -r requirements.txt
+```
 
-	2. AmazonEC2FullAccess
+---
 
-	
-## 3. Create ECR repo to store/save docker image
-    - Save the URI: 566373416292.dkr.ecr.us-east-1.amazonaws.com/chicken
+## 🔧 Changing Hyperparameters
 
-	
-## 4. Create EC2 machine (Ubuntu) 
+Edit `params.yaml` to change training settings:
 
-## 5. Open EC2 and Install docker in EC2 Machine:
-	
-	
-	#optinal
+```yaml
+EPOCHS: 15          # increase for better accuracy
+BATCH_SIZE: 16
+IMAGE_SIZE: [224, 224, 3]
+AUGMENTATION: True
+LEARNING_RATE: 0.01
+```
 
-	sudo apt-get update -y
+Then rerun:
+```bash
+python main.py
+# or
+dvc repro
+```
 
-	sudo apt-get upgrade
-	
-	#required
+---
 
-	curl -fsSL https://get.docker.com -o get-docker.sh
+## 📈 Results
 
-	sudo sh get-docker.sh
+```
+Validation Loss     : 0.2918
+Validation Accuracy : 88.79%
+AUC Score           : 0.935
+F1-Score            : 0.888
+```
 
-	sudo usermod -aG docker ubuntu
+Evaluation outputs are saved to `artifacts/evaluation_results/`:
+- `confusion_matrix.png`
+- `roc_curve.png`
+- `per_class_metrics.png`
+- `evaluation_dashboard.png`
+- `evaluation_metrics.json`
 
-	newgrp docker
-	
-# 6. Configure EC2 as self-hosted runner:
-    setting>actions>runner>new self hosted runner> choose os> then run command one by one
+---
 
+## 👤 Author
 
-# 7. Setup github secrets:
+**Krishna Nandi**  
+M.Tech — Artificial Intelligence and Machine Learning  
+Symbiosis Institute of Technology, Pune  
+📧 krishna.nandi.mtech2025@sitpune.edu.in  
+🔗 [GitHub](https://github.com/krishna2002jisucse-cyber)
 
-    AWS_ACCESS_KEY_ID=
+---
 
-    AWS_SECRET_ACCESS_KEY=
+## 📄 License
 
-    AWS_REGION = us-east-1
+This project is for academic purposes under Symbiosis Institute of Technology, Pune.
 
-    AWS_ECR_LOGIN_URI = demo>>  566373416292.dkr.ecr.ap-south-1.amazonaws.com
+---
 
-    ECR_REPOSITORY_NAME = simple-app
-
-
-
-
-# AZURE-CICD-Deployment-with-Github-Actions
-
-## Save pass:
-
-s3cEZKH5yytiVnJ3h+eI3qhhzf9q1vNwEi6+q+WGdd+ACRCZ7JD6
-
-
-## Run from terminal:
-
-docker build -t chickenapp.azurecr.io/chicken:latest .
-
-docker login chickenapp.azurecr.io
-
-docker push chickenapp.azurecr.io/chicken:latest
-
-
-## Deployment Steps:
-
-1. Build the Docker image of the Source Code
-2. Push the Docker image to Container Registry
-3. Launch the Web App Server in Azure 
-4. Pull the Docker image from the container registry to Web App server and run 
+*If you find this project helpful, please ⭐ star the repository!*
