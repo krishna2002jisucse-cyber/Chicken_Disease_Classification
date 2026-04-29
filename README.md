@@ -288,6 +288,11 @@ Symbiosis Institute of Technology, Pune
 📧 krishna.nandi.mtech2025@sitpune.edu.in  
 🔗 [GitHub](https://github.com/krishna2002jisucse-cyber)
 
+**Jay Modhiya**
+M.Tech — Artificial Intelligence and Machine Learning  
+Symbiosis Institute of Technology, Pune  
+
+
 ---
 
 ## 📄 License
@@ -296,4 +301,3 @@ This project is for academic purposes under Symbiosis Institute of Technology, P
 
 ---
 
-*If you find this project helpful, please ⭐ star the repository!*
